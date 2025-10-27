@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 import type { DurationMilliseconds, ISODateTimeString } from "./common";
 
 /**
@@ -49,5 +50,23 @@ export interface Session {
   categoryId?: string | null;
   createdAt?: string;
   updatedAt?: string;
+}
+>>>>>>> theirs
+=======
+export interface Session {
+  id: string;
+  startedAt: string;
+  endedAt: string;
+  durationMs: number;
+  category: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SessionDraft {
+  startedAt: string;
+  endedAt: string;
+  durationMs: number;
 }
 >>>>>>> theirs

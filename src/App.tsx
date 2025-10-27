@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 import { FormEvent, useMemo, useState } from 'react';
 import { useSessions } from './context/SessionContext';
 import { CreateSessionInput } from '../types';
@@ -135,6 +136,329 @@ const App = () => {
       <div className="mx-auto max-w-6xl space-y-8">
         <Timesheet sessions={sessions} categories={categories} />
       </div>
+>>>>>>> theirs
+=======
+import { useEffect, useMemo, useState } from "react";
+import SessionDeleteConfirm from "./components/Sessions/SessionDeleteConfirm";
+import SessionEditModal from "./components/Sessions/SessionEditModal";
+import SessionFilters, { type FilterState } from "./components/Sessions/SessionFilters";
+import SessionForm from "./components/Sessions/SessionForm";
+import SessionList, { type SortState } from "./components/Sessions/SessionList";
+import { Session, SessionDraft } from "./types/session";
+import { formatDuration, startOfToday, startOfWeek, toDateInputValue } from "./utils/datetime";
+
+const generateId = () => {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
+const today = startOfToday();
+const initialFilters: FilterState = {
+  range: "today",
+  startDate: toDateInputValue(today),
+  endDate: toDateInputValue(today),
+  categories: [],
+};
+
+const App = () => {
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [draft, setDraft] = useState<SessionDraft | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [filters, setFilters] = useState<FilterState>(initialFilters);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sort, setSort] = useState<SortState>({ field: "date", direction: "desc" });
+  const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [deletingSession, setDeletingSession] = useState<Session | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isRunning || startTime === null) {
+      return;
+    }
+    const interval = window.setInterval(() => {
+      setElapsedMs(Date.now() - startTime);
+    }, 200);
+    return () => window.clearInterval(interval);
+  }, [isRunning, startTime]);
+
+  useEffect(() => {
+    if (!toast) {
+      return;
+    }
+    const timeout = window.setTimeout(() => setToast(null), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [toast]);
+
+  const handleStart = () => {
+    const now = Date.now();
+    setStartTime(now);
+    setElapsedMs(0);
+    setIsRunning(true);
+    setShowForm(false);
+    setDraft(null);
+  };
+
+  const handleStop = () => {
+    if (!isRunning || startTime === null) {
+      return;
+    }
+    const ended = Date.now();
+    setIsRunning(false);
+    setElapsedMs(ended - startTime);
+    setDraft({
+      startedAt: new Date(startTime).toISOString(),
+      endedAt: new Date(ended).toISOString(),
+      durationMs: ended - startTime,
+    });
+    setShowForm(true);
+  };
+
+  const handleReset = () => {
+    setIsRunning(false);
+    setStartTime(null);
+    setElapsedMs(0);
+    setShowForm(false);
+    setDraft(null);
+  };
+
+  const handleSaveSession = ({ category, notes }: { category: string; notes: string }) => {
+    if (!draft) {
+      return;
+    }
+    const timestamp = new Date().toISOString();
+    const newSession: Session = {
+      id: generateId(),
+      startedAt: draft.startedAt,
+      endedAt: draft.endedAt,
+      durationMs: draft.durationMs,
+      category,
+      notes,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    setSessions((previous) => [newSession, ...previous]);
+    setShowForm(false);
+    setDraft(null);
+  };
+
+  const handleCancelForm = () => {
+    setShowForm(false);
+    setDraft(null);
+  };
+
+  const handleSortChange = (nextSort: SortState) => {
+    setSort(nextSort);
+  };
+
+  const handleFiltersChange = (nextFilters: FilterState) => {
+    if (nextFilters.range === "week") {
+      const start = startOfWeek();
+      setFilters({
+        range: "week",
+        startDate: toDateInputValue(start),
+        endDate: toDateInputValue(new Date()),
+        categories: nextFilters.categories,
+      });
+      return;
+    }
+    setFilters(nextFilters);
+  };
+
+  const availableCategories = useMemo(() => {
+    const unique = new Set(sessions.map((session) => session.category));
+    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+  }, [sessions]);
+
+  const filteredSessions = useMemo(() => {
+    return sessions.filter((session) => {
+      const sessionEnd = new Date(session.endedAt);
+      if (filters.startDate) {
+        const start = new Date(filters.startDate);
+        start.setHours(0, 0, 0, 0);
+        if (sessionEnd.getTime() < start.getTime()) {
+          return false;
+        }
+      }
+      if (filters.endDate) {
+        const end = new Date(filters.endDate);
+        end.setHours(23, 59, 59, 999);
+        if (sessionEnd.getTime() > end.getTime()) {
+          return false;
+        }
+      }
+      if (filters.categories.length > 0 && !filters.categories.includes(session.category)) {
+        return false;
+      }
+      return true;
+    });
+  }, [sessions, filters]);
+
+  const showToast = (message: string) => {
+    setToast(message);
+  };
+
+  const handleEdit = (session: Session) => {
+    setEditingSession(session);
+  };
+
+  const handleUpdateSession = ({ category, notes }: { category: string; notes: string }) => {
+    if (!editingSession) {
+      return;
+    }
+    const updatedTimestamp = new Date().toISOString();
+    setSessions((previous) =>
+      previous.map((session) =>
+        session.id === editingSession.id
+          ? { ...session, category, notes, updatedAt: updatedTimestamp }
+          : session,
+      ),
+    );
+    setEditingSession(null);
+  };
+
+  const handleDelete = (session: Session) => {
+    setDeletingSession(session);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deletingSession) {
+      return;
+    }
+    setSessions((previous) => previous.filter((session) => session.id !== deletingSession.id));
+    setDeletingSession(null);
+  };
+
+  const activeDuration = isRunning ? elapsedMs : draft?.durationMs ?? elapsedMs;
+
+  return (
+    <div style={{ fontFamily: "system-ui, sans-serif", backgroundColor: "#e2e8f0", minHeight: "100vh" }}>
+      <main style={{ maxWidth: "960px", margin: "0 auto", padding: "2rem 1.5rem" }}>
+        <header style={{ marginBottom: "2rem" }}>
+          <h1 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "0.5rem" }}>Time tracker</h1>
+          <p style={{ color: "#475569" }}>Track sessions with categories and notes, then review and manage them.</p>
+        </header>
+
+        <section
+          style={{
+            backgroundColor: "#fff",
+            borderRadius: "1rem",
+            padding: "1.5rem",
+            marginBottom: "2rem",
+            boxShadow: "0 20px 45px rgba(15, 23, 42, 0.08)",
+          }}
+        >
+          <h2 style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>Stopwatch</h2>
+          <div style={{ fontSize: "2.5rem", fontVariantNumeric: "tabular-nums", marginBottom: "1.5rem" }}>
+            {formatDuration(activeDuration)}
+          </div>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={handleStart}
+              disabled={isRunning}
+              style={{
+                padding: "0.75rem 1.5rem",
+                borderRadius: "9999px",
+                border: "none",
+                backgroundColor: isRunning ? "#94a3b8" : "#16a34a",
+                color: "#fff",
+                cursor: isRunning ? "not-allowed" : "pointer",
+                fontWeight: 600,
+              }}
+            >
+              Start
+            </button>
+            <button
+              type="button"
+              onClick={handleStop}
+              disabled={!isRunning}
+              style={{
+                padding: "0.75rem 1.5rem",
+                borderRadius: "9999px",
+                border: "none",
+                backgroundColor: !isRunning ? "#94a3b8" : "#2563eb",
+                color: "#fff",
+                cursor: !isRunning ? "not-allowed" : "pointer",
+                fontWeight: 600,
+              }}
+            >
+              Stop
+            </button>
+            <button
+              type="button"
+              onClick={handleReset}
+              style={{
+                padding: "0.75rem 1.5rem",
+                borderRadius: "9999px",
+                border: "1px solid #94a3b8",
+                backgroundColor: "transparent",
+                color: "#0f172a",
+                cursor: "pointer",
+                fontWeight: 600,
+              }}
+            >
+              Reset
+            </button>
+          </div>
+        </section>
+
+        {showForm && (
+          <SessionForm draft={draft} onSave={handleSaveSession} onCancel={handleCancelForm} onToast={showToast} />
+        )}
+
+        <SessionFilters filters={filters} availableCategories={availableCategories} onChange={handleFiltersChange} />
+
+        <SessionList
+          sessions={filteredSessions}
+          sort={sort}
+          onSortChange={handleSortChange}
+          searchTerm={searchTerm}
+          onSearchTermChange={setSearchTerm}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      </main>
+
+      {editingSession && (
+        <SessionEditModal
+          session={editingSession}
+          onSave={handleUpdateSession}
+          onCancel={() => setEditingSession(null)}
+          onToast={showToast}
+        />
+      )}
+
+      {deletingSession && (
+        <SessionDeleteConfirm
+          session={deletingSession}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeletingSession(null)}
+          onToast={showToast}
+        />
+      )}
+
+      {toast && (
+        <div
+          role="status"
+          style={{
+            position: "fixed",
+            bottom: "2rem",
+            right: "2rem",
+            backgroundColor: "#0f172a",
+            color: "#fff",
+            padding: "0.75rem 1.25rem",
+            borderRadius: "9999px",
+            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.4)",
+          }}
+        >
+          {toast}
+        </div>
+      )}
 >>>>>>> theirs
     </div>
   );
