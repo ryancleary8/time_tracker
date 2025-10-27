@@ -1,3 +1,4 @@
+<<<<<<< ours
 import { useMemo } from "react";
 import { Session } from "../../types/session";
 import SessionItem from "./SessionItem";
@@ -16,10 +17,20 @@ interface SessionListProps {
   onSortChange: (sort: SortState) => void;
   searchTerm: string;
   onSearchTermChange: (value: string) => void;
+=======
+import type { Session } from '../../types';
+import { formatDisplayDate, formatDuration } from '../../utils/time';
+
+interface SessionListProps {
+  sessions: Session[];
+  selectedId: string | null;
+  onSelect: (session: Session) => void;
+>>>>>>> theirs
   onEdit: (session: Session) => void;
   onDelete: (session: Session) => void;
 }
 
+<<<<<<< ours
 const sortIndicators: Record<SortDirection, string> = {
   asc: "▲",
   desc: "▼",
@@ -143,6 +154,66 @@ const SessionList = ({
         </div>
       )}
     </section>
+=======
+const SessionList = ({ sessions, selectedId, onSelect, onEdit, onDelete }: SessionListProps) => {
+  if (sessions.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+        No sessions yet. Track time to see them here.
+      </div>
+    );
+  }
+
+  return (
+    <ul className="space-y-4">
+      {sessions.map((session) => {
+        const isSelected = session.id === selectedId;
+        return (
+          <li
+            key={session.id}
+            className={`rounded-lg border p-4 shadow-sm transition-colors ${
+              isSelected
+                ? 'border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-900/30'
+                : 'border-slate-200 bg-white hover:border-primary-300 dark:border-slate-700 dark:bg-slate-900'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <button
+                type="button"
+                onClick={() => onSelect(session)}
+                className="text-left text-sm text-slate-600 hover:underline focus:outline-none dark:text-slate-200"
+              >
+                <div className="text-base font-semibold text-slate-800 dark:text-slate-100">{session.category}</div>
+                <div>{formatDisplayDate(session.start)}</div>
+              </button>
+              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  {formatDuration(session.durationMs)}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-md border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-100"
+                  onClick={() => onEdit(session)}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-rose-200 px-3 py-1 text-xs text-rose-600 hover:bg-rose-50 dark:border-rose-700 dark:text-rose-300"
+                  onClick={() => onDelete(session)}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            {session.notes && (
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-200">{session.notes}</p>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+>>>>>>> theirs
   );
 };
 

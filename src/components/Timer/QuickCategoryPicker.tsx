@@ -1,3 +1,4 @@
+<<<<<<< ours
 import { categories, Category } from '../../constants/categories';
 
 type QuickCategoryPickerProps = {
@@ -37,11 +38,42 @@ const QuickCategoryPicker = ({
             aria-label={`Select ${category.name}`}
           >
             {category.name}
+=======
+interface QuickCategoryPickerProps {
+  categories: string[];
+  selected: string;
+  onSelect: (category: string) => void;
+}
+
+const QuickCategoryPicker = ({ categories, selected, onSelect }: QuickCategoryPickerProps) => (
+  <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Quick Categories</h2>
+    <div className="mt-4 flex flex-wrap gap-2">
+      {categories.map((category) => {
+        const isActive = category === selected;
+        return (
+          <button
+            type="button"
+            key={category}
+            onClick={() => onSelect(category)}
+            className={`rounded-full border px-4 py-1 text-sm transition-colors ${
+              isActive
+                ? 'border-primary-600 bg-primary-600 text-white'
+                : 'border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200'
+            }`}
+          >
+            {category}
+>>>>>>> theirs
           </button>
         );
       })}
     </div>
+<<<<<<< ours
   );
 };
+=======
+  </div>
+);
+>>>>>>> theirs
 
 export default QuickCategoryPicker;

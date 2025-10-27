@@ -1,3 +1,4 @@
+<<<<<<< ours
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import useTimer from '../../hooks/useTimer';
 import type { Category } from '../../constants/categories';
@@ -113,6 +114,66 @@ const Stopwatch = ({ onStop }: StopwatchProps) => {
         </button>
       </div>
     </section>
+=======
+import { useEffect, useState } from 'react';
+import { formatDuration } from '../../utils/time';
+
+interface StopwatchProps {
+  isRunning: boolean;
+  startedAt: number | null;
+  onStart: () => void;
+  onStop: () => void;
+}
+
+const Stopwatch = ({ isRunning, startedAt, onStart, onStop }: StopwatchProps) => {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    let interval: number | undefined;
+    if (isRunning && startedAt) {
+      setElapsed(Date.now() - startedAt);
+      interval = window.setInterval(() => {
+        setElapsed(Date.now() - startedAt);
+      }, 1000);
+    } else {
+      setElapsed(0);
+    }
+
+    return () => {
+      if (interval) {
+        window.clearInterval(interval);
+      }
+    };
+  }, [isRunning, startedAt]);
+
+  const display = isRunning && startedAt ? formatDuration(elapsed) : formatDuration(0);
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <div className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">Current Session</div>
+      <div className="mt-3 text-5xl font-semibold text-primary-600 dark:text-primary-300" aria-live="polite">
+        {display}
+      </div>
+      <div className="mt-6 flex items-center gap-4">
+        <button
+          type="button"
+          onClick={onStart}
+          disabled={isRunning}
+          className="rounded-md bg-primary-600 px-4 py-2 text-white shadow disabled:cursor-not-allowed disabled:bg-slate-300"
+        >
+          Start
+        </button>
+        <button
+          type="button"
+          onClick={onStop}
+          disabled={!isRunning}
+          className="rounded-md border border-slate-200 px-4 py-2 text-slate-700 shadow disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:text-slate-100"
+        >
+          Stop
+        </button>
+      </div>
+    </div>
+>>>>>>> theirs
   );
 };
 

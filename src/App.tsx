@@ -1,5 +1,6 @@
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { FormEvent, useMemo, useState } from 'react';
 import { useSessions } from './context/SessionContext';
 import { CreateSessionInput } from '../types';
@@ -463,5 +464,24 @@ const App = () => {
     </div>
   );
 };
+=======
+import { BrowserRouter } from 'react-router-dom';
+import MainLayout from './components/Layout/MainLayout';
+import { SessionProvider } from './context/SessionContext';
+import { ThemeProvider } from './context/ThemeContext';
+import AppRouter from './router';
+
+const App = () => (
+  <ThemeProvider>
+    <SessionProvider>
+      <BrowserRouter>
+        <MainLayout>
+          <AppRouter />
+        </MainLayout>
+      </BrowserRouter>
+    </SessionProvider>
+  </ThemeProvider>
+);
+>>>>>>> theirs
 
 export default App;
