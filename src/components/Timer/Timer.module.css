@@ -1,0 +1,11 @@
+.timerFace {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+.milliseconds {
+  font-size: 0.5em;
+  line-height: 1;
+  margin-left: 0.25rem;
+  color: rgb(148 163 184);
+}
